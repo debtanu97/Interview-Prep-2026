@@ -26,5 +26,5 @@
   String Manipulation · DFS with Memoization · Dependency Graph Resolution · Cycle Detection
 
 - **Solution (Interview-Prep-2026):**  
-  [Resolve String Template with Recursive Dependency Resolution](https://github.com/debtanu97/Interview-Prep-2026/tree/main/DSA/ResolveStringTemplate)
+  [Resolve String Template with Recursive Dependency Resolution](https://github.com/debtanu97/Interview-Prep-2026/tree/main/DSA/ResolveStringFromTemplate)
 
