@@ -1,6 +1,6 @@
 # Binary Series Sum
 
-## Problem Statement - 1
+## Problem Statement
 
 Given a number **N**, find the **minimum number of terms** from the "binary-only decimal" series whose sum equals N.
 
@@ -97,3 +97,104 @@ Decomposition:
  
 ---
 
+# Implement Max Stack
+
+## Problem Statement
+
+Implement a **Max Stack** that supports the following five operations, with **no operation running in O(N) time**:
+
+| Operation | Description |
+|---|---|
+| `push(x)` | Push element `x` onto the stack |
+| `pop()` | Remove and return the top element |
+| `peek()` | Return the top element without removing it |
+| `peekMax()` | Return the maximum element without removing it |
+| `removeMax()` | Remove and return the maximum element |
+ 
+---
+
+## Approach: Doubly-Linked List + TreeMap
+
+The core challenge is `removeMax()`. A plain stack with a "max tracker" array can handle `peekMax` in O(1), but removing the maximum from an arbitrary position in the stack is O(N) with a plain array/linked list because we have to shift elements.
+
+The key insight is to **separate the stack's ordering concern from the max-finding concern**, and use a shared node reference to bridge them.
+
+### Data Structures
+
+**1. Doubly-Linked List (DLL) — acts as the stack**
+
+```
+sentinel_head ↔ [node1] ↔ [node2] ↔ ... ↔ [nodeN] ↔ sentinel_tail
+                                                 ▲
+                                              "top" of stack
+```
+
+- `push` → insert a new node before the sentinel tail → O(1)
+- `pop` → unlink the node just before the sentinel tail → O(1)
+- `peek` → read `tail.prev.val` → O(1)
+- Sentinel nodes eliminate all edge cases for insertion/removal.
+  **2. `TreeMap<Integer, List<Node>>` — maps values to their DLL nodes**
+
+```
+TreeMap:
+  1 → [nodeA]
+  3 → [nodeB, nodeC]   ← two nodes with value 3
+  5 → [nodeD]
+        ▲
+     lastKey() = max
+```
+
+- `peekMax` → `treeMap.lastKey()` → O(log N)
+- `removeMax` → get the last node from the list at `lastKey()`, unlink it from the DLL → O(log N)
+### Why Share Node References?
+
+When `removeMax` is called, the TreeMap gives us the **exact DLL node** to remove. Because the DLL is doubly-linked, unlinking any arbitrary node is O(1) once we have a pointer to it. No linear scan needed.
+
+### Handling Duplicates
+
+Each TreeMap key maps to a `List<Node>` — all DLL nodes carrying that value. When a duplicate is pushed, its node is appended to the list. `removeMax` always removes the **last** entry from the list (the most recently pushed copy), which is O(1).
+ 
+---
+
+## Complexity
+
+| Operation | Time | Notes |
+|---|---|---|
+| `push(x)` | O(log N) | DLL insert O(1) + TreeMap insert O(log N) |
+| `pop()` | O(log N) | DLL unlink O(1) + TreeMap update O(log N) |
+| `peek()` | O(1) | Read DLL tail |
+| `peekMax()` | O(log N) | TreeMap `lastKey()` |
+| `removeMax()` | O(log N) | TreeMap lookup + DLL unlink |
+| **Space** | **O(N)** | N nodes in DLL + N entries across TreeMap lists |
+
+> `push` and `pop` are technically O(log N) due to the TreeMap maintenance. They could be O(1) if we only needed `peekMax`, but `removeMax` requires the map to be kept in sync.
+ 
+---
+
+## Why Not Other Approaches?
+
+| Approach | Problem |
+|---|---|
+| Stack + max-tracking aux stack | `removeMax` is O(N) — must scan for the max position |
+| Stack + `PriorityQueue` (heap) | `removeMax` from heap is O(log N), but removing the corresponding stack element to preserve order is O(N) |
+| Stack + sorted set (no node sharing) | Same issue — can't remove from middle of stack in O(1) |
+| **DLL + TreeMap (this approach)** | ✓ O(log N) for all operations |
+ 
+---
+
+## Test Cases
+
+| # | Scenario | Key Assertion |
+|---|---|---|
+| 1 | Basic push / peek / pop | Stack LIFO order preserved |
+| 2 | `peekMax` does not modify stack | `peek()` unchanged after `peekMax()` |
+| 3 | `removeMax` when max is in the middle | Correct element removed, stack order preserved |
+| 4 | `removeMax` when max is on top | Behaves like `pop()` in this case |
+| 5 | `removeMax` when max is at the bottom | Middle-of-list removal works via DLL pointer |
+| 6 | Duplicate values — only one copy removed | TreeMap list shrinks by one entry |
+| 7 | Duplicate values — most recent copy removed first | Last-in-list removal is correct |
+| 8 | Interleaved `push` and `removeMax` | Map and DLL stay in sync across mixed ops |
+| 9 | All same values | `peekMax` always returns the same value until empty |
+| 10 | Single element | Degenerate case: push → peekMax → removeMax |
+ 
+---

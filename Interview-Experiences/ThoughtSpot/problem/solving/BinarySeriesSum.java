@@ -18,34 +18,8 @@ public class BinarySeriesSum {
         this.N = N;
     }
 
-    // ------------------------------------------------------------------
-    // Approach 1 (Brute Force / Naive DP):
-    //   Generate all binary-decimal numbers <= N via BFS expansion,
-    //   then run classic coin-change DP.
-    //   Time:  O(N * K) where K = number of binary-decimal terms <= N
-    //   Space: O(N + K)
-    // ------------------------------------------------------------------
-    public int solutionDP() {
-        List<Integer> terms = generateTerms(N);
-
-        int[] dp = new int[N + 1];
-        Arrays.fill(dp, Integer.MAX_VALUE);
-        dp[0] = 0;
-
-        for (int i = 1; i <= N; i++) {
-            for (int term : terms) {
-                if (term > i) break; // terms are sorted
-                if (dp[i - term] != Integer.MAX_VALUE) {
-                    dp[i] = Math.min(dp[i], dp[i - term] + 1);
-                }
-            }
-        }
-
-        return dp[N];
-    }
-
-    // Generates all binary-decimal numbers <= N in sorted order.
-    // Uses BFS: start from 1, expand by appending '0' or '1'.
+    // Generates all binary-decimal numbers <= limit in sorted order.
+    // Uses BFS: root=1, children of x are x*10 and x*10+1.
     private List<Integer> generateTerms(int limit) {
         List<Integer> terms = new ArrayList<>();
         Queue<Long> queue = new LinkedList<>();
@@ -61,61 +35,54 @@ public class BinarySeriesSum {
         return terms;
     }
 
-    // ------------------------------------------------------------------
-    // Approach 2 (Greedy / Optimal):
-    //   Key insight: Each decimal digit d of N requires exactly d binary-decimal
-    //   terms to cover it at that positional value (e.g., digit 7 → seven 1s,
-    //   or seven 10s, etc.). The minimum total count is simply the digit sum of N.
-    //
-    //   Why it works: Any binary-decimal number contributes a single 1-digit to
-    //   exactly one (or more) decimal positions. The tightest packing aligns one
-    //   term per unit of each digit. Therefore sum-of-digits is both achievable
-    //   and minimal.
-    //
-    //   Time:  O(log N)  — one pass over digits
-    //   Space: O(1)
-    // ------------------------------------------------------------------
-    public int solutionGreedy() {
-        int digitSum = 0;
-        int n = N;
-        while (n > 0) {
-            digitSum += n % 10;
-            n /= 10;
+    public int solution() {
+        List<Integer> terms = generateTerms(N);
+
+        int[] dp = new int[N + 1];
+        Arrays.fill(dp, Integer.MAX_VALUE);
+        dp[0] = 0;
+
+        for (int i = 1; i <= N; i++) {
+            for (int term : terms) {
+                if (term > i) break;
+                if (dp[i - term] != Integer.MAX_VALUE) {
+                    dp[i] = Math.min(dp[i], dp[i - term] + 1);
+                }
+            }
         }
-        return digitSum;
+
+        return dp[N];
     }
 
-    // ------------------------------------------------------------------
-    // Test suite
-    // ------------------------------------------------------------------
     public static Integer[] getTestSuite() {
-        // Each entry is an N value to test
         return new Integer[]{
-                1,    // 1 → 1
-                2,    // 1+1 → 2
-                10,   // 10 → 1
-                11,   // 11 → 2
-                18,   // 11+1+1+1+1+1+1+1 → 8
-                20,   // 11+1+1+...  → 2+0 = 2
-                99,   // 9+9 → 18
-                100,  // 100 → 1
-                123,  // 1+2+3 → 6
-                999,  // 9+9+9 → 27
+                1,    // 1                    → 1
+                2,    // 1+1                  → 2
+                10,   // 10                   → 1
+                11,   // 11                   → 1
+                18,   // 11+1*7               → 8
+                20,   // 10+10                → 2
+                22,   // 11+11                → 2
+                99,   // 11*9                 → 9
+                100,  // 100                  → 1
+                123,  // 111+11+1             → 3
+                999,  // 111*9                → 9
         };
     }
 
     public static Integer[] getTestResults() {
         return new Integer[]{
-                1,   // N=1
-                2,   // N=2
-                1,   // N=10
-                2,   // N=11
-                8,   // N=18
-                2,   // N=20
-                18,  // N=99
-                1,   // N=100
-                6,   // N=123
-                27,  // N=999
+                1,  // N=1
+                2,  // N=2
+                1,  // N=10
+                1,  // N=11
+                8,  // N=18
+                2,  // N=20
+                2,  // N=22
+                9,  // N=99
+                1,  // N=100
+                3,  // N=123
+                9,  // N=999
         };
     }
 }
